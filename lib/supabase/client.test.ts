@@ -8,6 +8,7 @@ vi.mock('@supabase/ssr', () => ({
 
 describe('lib/supabase/client', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.resetModules();
     process.env = {
       ...originalEnv,
