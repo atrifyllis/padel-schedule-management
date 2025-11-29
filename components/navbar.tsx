@@ -19,6 +19,9 @@ export default function Navbar({ user }: { user: User | null }) {
           <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/">
             Home
           </Link>
+          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/bookings">
+            Bookings
+          </Link>
           <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/auth">
             Auth
           </Link>

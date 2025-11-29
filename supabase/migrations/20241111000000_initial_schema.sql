@@ -71,9 +71,9 @@ create policy "admins manage bookings" on public.bookings
   with check (public.is_admin(auth.uid()));
 
 -- Availabilities policies
-create policy "players view own availabilities" on public.availabilities
+create policy "players view availabilities" on public.availabilities
   for select
-  using (user_id = auth.uid());
+  using (auth.uid() is not null);
 
 create policy "players manage own availabilities" on public.availabilities
   for insert
