@@ -50,7 +50,7 @@ export default async function AdminCourtsPage() {
         <h1 className="text-3xl font-bold text-slate-900">Manage Courts</h1>
         <p className="text-slate-600">Add, edit, or remove courts from your scheduling system.</p>
       </div>
-      <CourtsManager courts={courts} />
+      <CourtsManager courts={(courts as any) ?? []} />
     </div>
   );
 }

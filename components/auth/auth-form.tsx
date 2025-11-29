@@ -20,7 +20,7 @@ export default function AuthForm() {
         Use the magic link flow or continue with Google via Supabase Auth UI.
       </p>
       <Auth
-        supabaseClient={supabase}
+        supabaseClient={supabase as any}
         appearance={{
           theme: ThemeSupa,
           variables: {

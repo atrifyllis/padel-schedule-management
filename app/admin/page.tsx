@@ -59,7 +59,7 @@ export default async function AdminPage() {
         <h1 className="text-3xl font-bold text-slate-900">Admin bookings</h1>
         <p className="text-slate-600">Manage court bookings with an interactive calendar and overlap validation.</p>
       </div>
-      <BookingCalendar courts={courts} bookings={bookings} />
+      <BookingCalendar courts={(courts as any) ?? []} bookings={(bookings as any) ?? []} />
     </div>
   );
 }

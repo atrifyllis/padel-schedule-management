@@ -12,7 +12,7 @@ export default async function AuthPage() {
       <div className="max-w-4xl">
         <h1 className="text-3xl font-bold text-slate-900">Authentication</h1>
         <p className="mt-2 text-lg text-slate-600">
-          Sign in with email or Google to access your padel schedules using Supabase's Auth UI. Sessions are persisted via middleware so you can stay logged in across the app, and new accounts automatically receive the default player role.
+          Sign in with email or Google to access your padel schedules using Supabase&apos;s Auth UI. Sessions are persisted via middleware so you can stay logged in across the app, and new accounts automatically receive the default player role.
         </p>
       </div>
       <div className="flex flex-wrap items-start gap-8">
