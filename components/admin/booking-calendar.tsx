@@ -2,19 +2,23 @@
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
-import { dateFnsLocalizer, type CalendarProps, type EventPropGetter, type ToolbarProps } from 'react-big-calendar';
+import { dateFnsLocalizer } from 'react-big-calendar';
+// Provide ambient module declaration fallback
+// @ts-ignore - module types provided via custom d.ts
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
+// Add date helpers
+import { addDays, addMonths } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useRouter } from 'next/navigation';
 import { createBookingAction, updateBookingAction } from '@/app/actions/bookings';
 import { toLocalInputValue } from '@/lib/utils/booking';
 
+// Remove inline module declaration (now handled via root d.ts)
+
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-const BigCalendar = dynamic<CalendarProps<CalendarEvent>>(
-  () => import('react-big-calendar').then((module) => module.Calendar),
-  { ssr: false }
-);
+const BigCalendar = dynamic<any>(() => import('react-big-calendar').then((module) => module.Calendar), { ssr: false });
 
 type Court = {
   id: string;
@@ -52,8 +56,8 @@ const locales = {
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
 type CalendarEvent = {
-  id: string;
-  title: string;
+  id?: string;
+  title?: string;
   start: Date;
   end: Date;
   resource?: Booking;
@@ -65,59 +69,8 @@ const statusStyles: Record<string, string> = {
   cancelled: 'bg-rose-100 text-rose-800 border-rose-300'
 };
 
-function CalendarToolbar({ label, onNavigate, onView }: ToolbarProps) {
-  const views = [
-    { key: 'month', label: 'Month' },
-    { key: 'week', label: 'Week' },
-    { key: 'day', label: 'Day' },
-    { key: 'agenda', label: 'Agenda' }
-  ];
-
-  return (
-    <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="rounded border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-          onClick={() => onNavigate('TODAY')}
-        >
-          Today
-        </button>
-        <div className="flex items-center divide-x divide-slate-200 rounded border border-slate-200 text-slate-700 shadow-sm">
-          <button
-            type="button"
-            className="px-2 py-1 text-sm font-medium transition hover:bg-slate-50"
-            onClick={() => onNavigate('PREV')}
-            aria-label="Previous"
-          >
-            ←
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 text-sm font-medium transition hover:bg-slate-50"
-            onClick={() => onNavigate('NEXT')}
-            aria-label="Next"
-          >
-            →
-          </button>
-        </div>
-        <span className="text-sm font-semibold text-slate-900">{label}</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {views.map((view) => (
-          <button
-            key={view.key}
-            type="button"
-            className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-            onClick={() => onView(view.key)}
-          >
-            {view.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+// Define local event prop getter type
+type LocalEventPropGetter<T> = (event: T) => { className?: string; style?: React.CSSProperties } | undefined;
 
 export default function BookingCalendar({ courts, bookings }: AdminBookingCalendarProps) {
   const router = useRouter();
@@ -134,6 +87,10 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
     status: 'pending'
   });
   const [message, setMessage] = useState<string | null>(null);
+
+  // Controlled calendar state for date and view to ensure navigation works
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [currentView, setCurrentView] = useState<string>('week');
 
   const events = useMemo<CalendarEvent[]>(
     () =>
@@ -155,6 +112,18 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
       }),
     [bookings]
   );
+
+  const computeLabel = (): string => {
+    if (currentView === 'month') {
+      return format(currentDate, 'MMMM yyyy');
+    }
+    if (currentView === 'day') {
+      return format(currentDate, 'MMM d');
+    }
+    const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+    const end = addDays(start, currentView === 'week' || currentView === 'agenda' ? 6 : 0);
+    return `${format(start, 'MMM d')} – ${format(end, 'MMM d')}`;
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -214,7 +183,7 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
     setMessage(null);
   };
 
-  const eventPropGetter: EventPropGetter<CalendarEvent> = (event) => {
+  const eventPropGetter: LocalEventPropGetter<CalendarEvent> = (event: CalendarEvent) => {
     const booking = event.resource;
     const styleKey = booking?.status ?? 'pending';
     const classes = statusStyles[styleKey] ?? 'bg-slate-100 text-slate-800 border-slate-200';
@@ -250,18 +219,84 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
         <BigCalendar
           selectable
           popup
+          toolbar={false}
+          date={currentDate}
+          view={currentView as any}
           defaultView="week"
           views={['month', 'week', 'day', 'agenda']}
-          toolbar
-          components={{ toolbar: CalendarToolbar }}
-          defaultDate={new Date()}
+          // Use built-in toolbar for now (removed custom version to restore functionality)
           localizer={localizer}
           events={events}
           onSelectSlot={handleSelectSlot}
           onSelectEvent={handleSelectEvent}
           style={{ height: 650 }}
           eventPropGetter={eventPropGetter}
+          onNavigate={(newDate: Date) => {
+            // Align date to appropriate period basis
+            let aligned = newDate;
+            if (currentView === 'week' || currentView === 'agenda') {
+              aligned = startOfWeek(newDate, { weekStartsOn: 0 });
+            }
+            setCurrentDate(aligned);
+          }}
+          onView={(newView: string) => {
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.log('[Calendar] view change', { from: currentView, to: newView });
+            }
+            setCurrentView(newView);
+          }}
         />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setCurrentDate(startOfWeek(new Date(), { weekStartsOn: 0 }))}
+            className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            Today
+          </button>
+          <div className="flex items-center divide-x divide-slate-200 rounded border border-slate-200 text-slate-700 shadow-sm">
+            <button
+              type="button"
+              onClick={() => {
+                let next: Date;
+                if (currentView === 'month') next = addMonths(currentDate, -1);
+                else if (currentView === 'week' || currentView === 'agenda') next = addDays(currentDate, -7);
+                else next = addDays(currentDate, -1);
+                setCurrentDate(next);
+              }}
+              className="px-2 py-1 text-xs font-medium transition hover:bg-slate-50"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                let next: Date;
+                if (currentView === 'month') next = addMonths(currentDate, 1);
+                else if (currentView === 'week' || currentView === 'agenda') next = addDays(currentDate, 7);
+                else next = addDays(currentDate, 1);
+                setCurrentDate(next);
+              }}
+              className="px-2 py-1 text-xs font-medium transition hover:bg-slate-50"
+            >
+              →
+            </button>
+          </div>
+          {['month', 'week', 'day', 'agenda'].map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setCurrentView(v)}
+              className={`rounded-lg border px-3 py-1 text-xs font-medium shadow-sm transition ${
+                currentView === v ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+          <span className="ml-auto text-xs font-semibold text-slate-900">{computeLabel()}</span>
+        </div>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4">

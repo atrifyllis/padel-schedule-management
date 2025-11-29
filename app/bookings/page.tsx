@@ -2,6 +2,8 @@ import Link from 'next/link';
 import BookingAvailabilityList from '@/components/booking-availability-list';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BookingsPage() {
   const supabase = createClient();
   const {
@@ -20,10 +22,13 @@ export default async function BookingsPage() {
     );
   }
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
   const { data: bookings = [], error: bookingsError } = await supabase
     .from('bookings')
     .select('id, start_time, end_time, status, courts(name), availabilities(probability, user_id)')
-    .gte('start_time', new Date().toISOString())
+    .gte('start_time', todayStart.toISOString())
     .order('start_time');
 
   if (bookingsError) {

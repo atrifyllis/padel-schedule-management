@@ -33,7 +33,7 @@ async function requireAdmin() {
     return { supabase, error: 'Admin access required.' } as const;
   }
 
-  return { supabase, error: null as const };
+  return { supabase, error: null };
 }
 
 async function hasOverlap(
@@ -82,7 +82,9 @@ export async function createBookingAction(payload: BookingPayload): Promise<Acti
     return { success: false, error: insertError.message };
   }
 
+  // Revalidate both admin and public bookings views so the new booking appears immediately.
   revalidatePath('/admin');
+  revalidatePath('/bookings');
   return { success: true };
 }
 
@@ -115,6 +117,8 @@ export async function updateBookingAction(payload: BookingPayload): Promise<Acti
     return { success: false, error: updateError.message };
   }
 
+  // Revalidate both pages so updates propagate everywhere.
   revalidatePath('/admin');
+  revalidatePath('/bookings');
   return { success: true };
 }
