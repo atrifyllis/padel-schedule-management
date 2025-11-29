@@ -69,6 +69,13 @@ const statusStyles: Record<string, string> = {
   cancelled: 'bg-rose-100 text-rose-800 border-rose-300'
 };
 
+// Inline color palette to ensure calendar events match the legend exactly
+const statusColors: Record<string, { bg: string; fg: string; border: string }> = {
+  confirmed: { bg: '#d1fae5', fg: '#065f46', border: '#86efac' }, // emerald-100 / -800 / -300
+  pending: { bg: '#fef3c7', fg: '#92400e', border: '#fcd34d' },    // amber-100 / -800 / -300
+  cancelled: { bg: '#ffe4e6', fg: '#9f1239', border: '#fda4af' }  // rose-100 / -800 / -300
+};
+
 // Define local event prop getter type
 type LocalEventPropGetter<T> = (event: T) => { className?: string; style?: React.CSSProperties } | undefined;
 
@@ -185,12 +192,15 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
 
   const eventPropGetter: LocalEventPropGetter<CalendarEvent> = (event: CalendarEvent) => {
     const booking = event.resource;
-    const styleKey = booking?.status ?? 'pending';
-    const classes = statusStyles[styleKey] ?? 'bg-slate-100 text-slate-800 border-slate-200';
+    const key = booking?.status ?? 'pending';
+    const palette = statusColors[key] ?? { bg: '#e2e8f0', fg: '#1f2937', border: '#cbd5e1' }; // slate fallback
 
     return {
-      className: classes,
+      className: 'border',
       style: {
+        backgroundColor: palette.bg,
+        color: palette.fg,
+        borderColor: palette.border,
         borderWidth: 1,
         borderStyle: 'solid'
       }
