@@ -8,6 +8,10 @@ import { setAvailabilityAction } from '@/app/actions/availabilities';
 type Availability = {
   user_id: string;
   probability: number;
+  users?: {
+    display_name?: string | null;
+    email?: string | null;
+  } | null;
 };
 
 type Booking = {
@@ -64,6 +68,16 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
   };
 
   const presetOptions = [0, 25, 50, 75, 100];
+
+  const responders = useMemo(() => {
+    const list = (booking.availabilities ?? []).map((a) => ({
+      id: a.user_id,
+      name: a.users?.display_name || a.users?.email || a.user_id.slice(0, 8),
+      probability: a.probability
+    }));
+    // Sort by probability desc, then name asc
+    return list.sort((a, b) => (b.probability - a.probability) || a.name.localeCompare(b.name));
+  }, [booking.availabilities]);
 
   return (
     <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -150,6 +164,39 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
           >
             {feedback}
           </p>
+        )}
+      </div>
+
+      {/* Responses list */}
+      <div className="rounded-xl border border-slate-100 bg-white/50 p-4">
+        <p className="mb-2 text-sm font-semibold text-slate-800">Responses</p>
+        {responders.length === 0 ? (
+          <p className="text-sm text-slate-500">No responses yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {responders.map((r) => (
+              <li key={r.id} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
+                    {r.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-slate-800">{r.name}</span>
+                  {r.id === currentUserId && (
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">you</span>
+                  )}
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                  r.probability === 0
+                    ? 'bg-rose-50 text-rose-700'
+                    : r.probability === 100
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-700'
+                }`}>
+                  {r.probability}%
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

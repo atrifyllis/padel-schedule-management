@@ -27,7 +27,7 @@ export default async function BookingsPage() {
 
   const { data: bookings = [], error: bookingsError } = await supabase
     .from('bookings')
-    .select('id, start_time, end_time, status, courts(name), availabilities(probability, user_id)')
+    .select('id, start_time, end_time, status, courts(name), availabilities(probability, user_id, users(display_name, email))')
     .gte('start_time', todayStart.toISOString())
     .order('start_time');
 
@@ -50,7 +50,7 @@ export default async function BookingsPage() {
           aggregated per slot.
         </p>
       </div>
-      <BookingAvailabilityList bookings={bookings} currentUserId={user.id} />
+      <BookingAvailabilityList bookings={(bookings as any) ?? []} currentUserId={user.id} />
     </div>
   );
 }
