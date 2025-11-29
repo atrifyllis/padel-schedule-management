@@ -34,11 +34,22 @@ export default async function AdminPage() {
     );
   }
 
-  const { data: courts = [] } = await supabase.from('courts').select('id, name').order('name');
-  const { data: bookings = [] } = await supabase
+  const { data: courts = [], error: courtsError } = await supabase.from('courts').select('id, name').order('name');
+  const { data: bookings = [], error: bookingsError } = await supabase
     .from('bookings')
     .select('id, court_id, start_time, end_time, status, courts(name)')
     .order('start_time');
+
+  if (courtsError || bookingsError) {
+    const message = courtsError?.message ?? bookingsError?.message ?? 'Unknown error';
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-rose-800 shadow-sm" role="alert">
+        <h2 className="text-2xl font-semibold">Unable to load admin data</h2>
+        <p className="mt-2 text-sm">{message}</p>
+        <p className="mt-2 text-sm text-rose-700">Try reloading the page or verifying your database connection.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

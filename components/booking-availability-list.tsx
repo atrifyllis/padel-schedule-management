@@ -26,23 +26,7 @@ type BookingAvailabilityListProps = {
   currentUserId: string;
 };
 
-type SlotStats = {
-  responseCount: number;
-  availableCount: number;
-  unavailableCount: number;
-  averageProbability: number;
-};
-
-function getSlotStats(availabilities: Availability[] = []): SlotStats {
-  const responseCount = availabilities.length;
-  const availableCount = availabilities.filter((availability) => availability.probability > 0).length;
-  const unavailableCount = availabilities.filter((availability) => availability.probability === 0).length;
-  const averageProbability = responseCount
-    ? Math.round(availabilities.reduce((sum, availability) => sum + availability.probability, 0) / responseCount)
-    : 0;
-
-  return { responseCount, availableCount, unavailableCount, averageProbability };
-}
+import { getSlotStats } from '@/lib/utils/booking';
 
 function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; currentUserId: string }) {
   const router = useRouter();
@@ -50,6 +34,7 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
   const currentAvailability = booking.availabilities?.find((item) => item.user_id === currentUserId);
   const [probability, setProbability] = useState<number>(currentAvailability?.probability ?? 0);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   const stats = useMemo(() => getSlotStats(booking.availabilities ?? []), [booking.availabilities]);
 
@@ -62,12 +47,14 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
 
   const handleSave = () => {
     setFeedback(null);
+    setHasError(false);
 
     startTransition(async () => {
       const result = await setAvailabilityAction({ bookingId: booking.id, probability });
 
       if (!result.success) {
         setFeedback(result.error);
+        setHasError(true);
         return;
       }
 
@@ -110,7 +97,8 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
               key={option}
               type="button"
               onClick={() => setProbability(option)}
-              className={`rounded-full border px-3 py-1 text-sm font-medium shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 ${
+              aria-pressed={probability === option}
+              className={`rounded-full border px-3 py-1 text-sm font-medium shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
                 probability === option ? 'border-indigo-500 bg-white text-indigo-700' : 'border-slate-200 bg-white text-slate-700'
               }`}
             >
@@ -120,16 +108,21 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>Probability</span>
+            <label htmlFor={`probability-${booking.id}`}>Probability</label>
             <span className="font-semibold text-slate-900">{probability}%</span>
           </div>
           <input
+            id={`probability-${booking.id}`}
             type="range"
             min={0}
             max={100}
             step={5}
             value={probability}
             onChange={(event) => setProbability(Number(event.target.value))}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={probability}
+            aria-label="Availability probability"
             className="w-full accent-indigo-600"
           />
           <p className="text-sm text-slate-500">
@@ -141,7 +134,7 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isPending ? 'Saving...' : 'Save availability'}
           </button>
@@ -149,7 +142,15 @@ function BookingAvailabilityRow({ booking, currentUserId }: { booking: Booking; 
             Your choice: <span className="font-semibold text-indigo-700">{probability}%</span>
           </p>
         </div>
-        {feedback && <p className="text-sm text-emerald-700">{feedback}</p>}
+        {feedback && (
+          <p
+            className={`text-sm ${hasError ? 'text-rose-700' : 'text-emerald-700'}`}
+            role={hasError ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {feedback}
+          </p>
+        )}
       </div>
     </div>
   );

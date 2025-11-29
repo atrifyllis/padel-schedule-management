@@ -16,16 +16,28 @@ export default function Navbar({ user }: { user: User | null }) {
           </div>
         </div>
         <nav className="flex items-center gap-4">
-          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/">
+          <Link
+            className="text-sm font-medium text-slate-700 hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            href="/"
+          >
             Home
           </Link>
-          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/bookings">
+          <Link
+            className="text-sm font-medium text-slate-700 hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            href="/bookings"
+          >
             Bookings
           </Link>
-          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/auth">
+          <Link
+            className="text-sm font-medium text-slate-700 hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            href="/auth"
+          >
             Auth
           </Link>
-          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/admin">
+          <Link
+            className="text-sm font-medium text-slate-700 hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            href="/admin"
+          >
             Admin
           </Link>
           {user ? (
@@ -35,7 +47,7 @@ export default function Navbar({ user }: { user: User | null }) {
             </div>
           ) : (
             <Link
-              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500"
+              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               href="/auth"
             >
               Sign in

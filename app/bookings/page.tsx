@@ -20,11 +20,21 @@ export default async function BookingsPage() {
     );
   }
 
-  const { data: bookings = [] } = await supabase
+  const { data: bookings = [], error: bookingsError } = await supabase
     .from('bookings')
     .select('id, start_time, end_time, status, courts(name), availabilities(probability, user_id)')
     .gte('start_time', new Date().toISOString())
     .order('start_time');
+
+  if (bookingsError) {
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-800 shadow-sm" role="alert">
+        <h2 className="text-xl font-semibold">Unable to load bookings</h2>
+        <p className="mt-2 text-sm">{bookingsError.message}</p>
+        <p className="mt-2 text-sm text-rose-700">Please try refreshing the page or checking your connection.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

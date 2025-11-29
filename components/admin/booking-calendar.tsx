@@ -6,6 +6,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useRouter } from 'next/navigation';
 import { createBookingAction, updateBookingAction } from '@/app/actions/bookings';
+import { toLocalInputValue } from '@/lib/utils/booking';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -57,11 +58,6 @@ const statusStyles: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800 border-amber-300',
   cancelled: 'bg-rose-100 text-rose-800 border-rose-300'
 };
-
-function toLocalInputValue(date: Date) {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-}
 
 export default function BookingCalendar({ courts, bookings }: AdminBookingCalendarProps) {
   const router = useRouter();
@@ -199,14 +195,14 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
           <h3 className="text-lg font-semibold text-slate-900">{form.id ? 'Edit booking' : 'Create booking'}</h3>
           <p className="text-sm text-slate-600">Update booking details and save to the schedule.</p>
         </div>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit} aria-busy={isPending}>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="court">
               Court
             </label>
             <select
               id="court"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               value={form.courtId}
               onChange={(event) => setForm((prev) => ({ ...prev, courtId: event.target.value }))}
             >
@@ -226,7 +222,7 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
                 id="start"
                 type="datetime-local"
                 required
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 value={form.start}
                 onChange={(event) => setForm((prev) => ({ ...prev, start: event.target.value }))}
               />
@@ -239,7 +235,7 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
                 id="end"
                 type="datetime-local"
                 required
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 value={form.end}
                 onChange={(event) => setForm((prev) => ({ ...prev, end: event.target.value }))}
               />
@@ -251,7 +247,7 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
             </label>
             <select
               id="status"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               value={form.status}
               onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
             >
@@ -260,12 +256,16 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          {message && <p className="text-sm text-rose-600">{message}</p>}
+          {message && (
+            <p className="text-sm text-rose-600" role="alert" aria-live="assertive">
+              {message}
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <button
               type="submit"
               disabled={isPending || !form.courtId}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isPending ? 'Saving...' : form.id ? 'Update booking' : 'Create booking'}
             </button>
@@ -279,7 +279,7 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
                   end: initialEnd,
                   status: 'pending'
                 })}
-                className="text-sm font-medium text-slate-700 hover:text-indigo-600"
+                className="text-sm font-medium text-slate-700 hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
                 Cancel edit
               </button>
