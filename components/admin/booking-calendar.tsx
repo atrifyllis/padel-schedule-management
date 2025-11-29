@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { Calendar, dateFnsLocalizer, type EventPropGetter } from 'react-big-calendar';
+import dynamic from 'next/dynamic';
+import { dateFnsLocalizer, type CalendarProps, type EventPropGetter, type ToolbarProps } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { useRouter } from 'next/navigation';
@@ -9,6 +10,11 @@ import { createBookingAction, updateBookingAction } from '@/app/actions/bookings
 import { toLocalInputValue } from '@/lib/utils/booking';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+const BigCalendar = dynamic<CalendarProps<CalendarEvent>>(
+  () => import('react-big-calendar').then((module) => module.Calendar),
+  { ssr: false }
+);
 
 type Court = {
   id: string;
@@ -59,6 +65,60 @@ const statusStyles: Record<string, string> = {
   cancelled: 'bg-rose-100 text-rose-800 border-rose-300'
 };
 
+function CalendarToolbar({ label, onNavigate, onView }: ToolbarProps) {
+  const views = [
+    { key: 'month', label: 'Month' },
+    { key: 'week', label: 'Week' },
+    { key: 'day', label: 'Day' },
+    { key: 'agenda', label: 'Agenda' }
+  ];
+
+  return (
+    <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="rounded border border-slate-200 px-2 py-1 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+          onClick={() => onNavigate('TODAY')}
+        >
+          Today
+        </button>
+        <div className="flex items-center divide-x divide-slate-200 rounded border border-slate-200 text-slate-700 shadow-sm">
+          <button
+            type="button"
+            className="px-2 py-1 text-sm font-medium transition hover:bg-slate-50"
+            onClick={() => onNavigate('PREV')}
+            aria-label="Previous"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            className="px-2 py-1 text-sm font-medium transition hover:bg-slate-50"
+            onClick={() => onNavigate('NEXT')}
+            aria-label="Next"
+          >
+            →
+          </button>
+        </div>
+        <span className="text-sm font-semibold text-slate-900">{label}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {views.map((view) => (
+          <button
+            key={view.key}
+            type="button"
+            className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+            onClick={() => onView(view.key)}
+          >
+            {view.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function BookingCalendar({ courts, bookings }: AdminBookingCalendarProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -77,13 +137,22 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
 
   const events = useMemo<CalendarEvent[]>(
     () =>
-      bookings.map((booking) => ({
-        id: booking.id,
-        title: `${booking.courts?.name ?? 'Court'} (${booking.status})`,
-        start: new Date(booking.start_time),
-        end: new Date(booking.end_time),
-        resource: booking
-      })),
+      bookings.flatMap((booking) => {
+        const start = new Date(booking.start_time);
+        const end = new Date(booking.end_time);
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+
+        return [
+          {
+            id: booking.id,
+            title: `${booking.courts?.name ?? 'Court'} (${booking.status})`,
+            start,
+            end,
+            resource: booking
+          }
+        ];
+      }),
     [bookings]
   );
 
@@ -178,10 +247,14 @@ export default function BookingCalendar({ courts, bookings }: AdminBookingCalend
             ))}
           </div>
         </div>
-        <Calendar
+        <BigCalendar
           selectable
           popup
           defaultView="week"
+          views={['month', 'week', 'day', 'agenda']}
+          toolbar
+          components={{ toolbar: CalendarToolbar }}
+          defaultDate={new Date()}
           localizer={localizer}
           events={events}
           onSelectSlot={handleSelectSlot}
