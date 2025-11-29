@@ -22,6 +22,9 @@ export default function Navbar({ user }: { user: User | null }) {
           <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/auth">
             Auth
           </Link>
+          <Link className="text-sm font-medium text-slate-700 hover:text-indigo-600" href="/admin">
+            Admin
+          </Link>
           {user ? (
             <div className="flex items-center gap-3">
               <span className="hidden text-sm text-slate-600 sm:inline">{user.email}</span>
