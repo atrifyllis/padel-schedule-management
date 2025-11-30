@@ -6,11 +6,16 @@ This app is designed for the Next.js + Supabase stack from `docs/PLAN.md`. Follo
 1. Create a free project at https://supabase.com/.
 2. In **Authentication → Providers**, enable **Email** and **Google**.
    - In **Authentication → Configuration**, ensure **Allow new users to sign up** is enabled so players can register.
+   - Set **Site URL** to your production domain (e.g., `https://your-app.vercel.app`). Supabase uses this as the default redirect target for magic links and OAuth if no `redirectTo` is provided, and for deep links in emails. If this is left as `http://localhost:3000`, users will be redirected to localhost after signing in.
    - For **Google**, paste your OAuth **Client ID** and **Client Secret** and set the callback URL Supabase provides (format: `https://<your-project>.supabase.co/auth/v1/callback`). Google also needs the following authorized origins/redirects in the Cloud Console:
-     - Authorized JavaScript origins: your local dev URL (`http://localhost:3000`) and production Vercel URL.
+     - Authorized JavaScript origins: your local dev URL (`http://localhost:3000`) and production Vercel URL (e.g., `https://your-app.vercel.app`).
      - Authorized redirect URIs: the Supabase callback above, plus app routes that handle OAuth, e.g., `http://localhost:3000/auth/callback` and `https://your-app.vercel.app/auth/callback`.
 3. Copy the **Project URL** and **anon public key** from **Project settings → API**.
 4. In **Database → SQL**, apply the schema/RLS from `docs/PLAN.md` (tables: `users`, `courts`, `bookings`, `availabilities`).
+
+### Notes on redirects
+- The app passes `redirectTo` to Supabase Auth UI (`/auth/callback` on the current origin). In production this resolves to your Vercel domain. If you still see redirects to `http://localhost:3000`, your Supabase **Site URL** is likely set to localhost. Update it to your production domain.
+- The route handler at `app/auth/callback/route.ts` exchanges the `code` for a session and then redirects to `/?next=/` (default). You can pass `queryParams={{ next: '/' }}` in the Auth UI, or change the handler to send users elsewhere after login.
 
 ### Set an admin user (one-time setup)
 After your first user signs up, promote them to `admin` so they can manage bookings:
